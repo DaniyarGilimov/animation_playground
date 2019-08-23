@@ -1,4 +1,5 @@
 import 'package:animation_playground/classes/cardEngine.dart';
+import 'dart:math' as math;
 import 'package:animation_playground/classes/vector.dart';
 import 'package:animation_playground/main.dart';
 import 'package:flutter/material.dart';
@@ -17,27 +18,35 @@ class CardItem extends StatefulWidget {
 }
 
 class CardItemState extends State<CardItem> with TickerProviderStateMixin {
-  AnimationController controller;
-  Tween<double> animationTween;
-  Animation<double> animation;
-
   bool isDragging = false; //shows if card is dragging by finger
   bool isAnimating = false; //shows if card is thowing(sliding)
   bool isAnimatingBeginning = false; //shows if card is distributing
   bool isScalling = false; //shows if card changing it's scale
-  bool isDraggable = false;
+  bool isDraggable = false; //shows if card is draggable or not
+  bool isAngleAnimating = false; //shows if card's angle is animating/changing
+
+  // Animation used to change card location
+  AnimationController controller;
+  Tween<double> animationTween;
+  Animation<double> animation;
 
   // Animation used to center the card, after finger touches card
   AnimationController controllerCentering;
   Tween<double> animationCenteringTween;
   Animation<double> animationCentering;
 
+  // Animation used to distribute card
   AnimationController controllerDistribution;
   Animation<double> animationDistribution;
 
+  // Aniamtion used to scale card
   AnimationController controllerScalling;
   Tween<double> animationScallingTween;
   Animation<double> animationScalling;
+
+  // Animation used to change card angle
+  AnimationController controllerAngle;
+  Animation<double> animationAngle;
 
   //varibles used to center the card, after finger touches card
   double dx = 0;
@@ -61,6 +70,10 @@ class CardItemState extends State<CardItem> with TickerProviderStateMixin {
   Vector initialPosition;
   Vector initialScale = Vector(75, 125);
   Vector finalScale = Vector(75, 125);
+
+  // Rotation/Angle of card
+  double initialAngle = 0;
+  double finalAngle = 0;
 
   double endPointX = 0;
   Vector startPosition = new Vector(0, 0);
@@ -131,6 +144,25 @@ class CardItemState extends State<CardItem> with TickerProviderStateMixin {
                 y = finalPosition.y;
                 initialPosition = finalPosition;
                 isAnimatingBeginning = false;
+              });
+            }
+          });
+
+    controllerAngle = AnimationController(
+        duration: const Duration(milliseconds: 500), vsync: this);
+    animationAngle = Tween<double>(begin: 0, end: 1)
+        .chain(new CurveTween(
+          curve: Curves.easeOutQuad,
+        ))
+        .animate(controllerDistribution)
+          ..addListener(() {
+            setState(() {});
+          })
+          ..addStatusListener((AnimationStatus status) {
+            if (status == AnimationStatus.completed) {
+              setState(() {
+                initialAngle = finalAngle;
+                isAngleAnimating = false;
               });
             }
           });
@@ -235,6 +267,17 @@ class CardItemState extends State<CardItem> with TickerProviderStateMixin {
     controllerDistribution.forward();
   }
 
+  //Change angle of card
+  void setAngle(double _newAngle) {
+    controllerAngle.reset();
+    setState(() {
+      isAngleAnimating = true;
+
+      finalAngle = _newAngle;
+    });
+    controllerAngle.forward();
+  }
+
   // Change size of the card
   void scaleTo(Vector newScale) {
     controllerScalling.reset();
@@ -255,53 +298,60 @@ class CardItemState extends State<CardItem> with TickerProviderStateMixin {
   @override
   Widget build(BuildContext context) {
     return Positioned(
-      left: (isDragging)
-          ? x
-          : (isAnimating)
-              ? animation.value
-              : (isAnimatingBeginning)
-                  ? initialPosition.x +
-                      (finalPosition.x - initialPosition.x) *
-                          animationDistribution.value
-                  : x,
-      top: (isDragging)
-          ? y
-          : (isAnimatingBeginning)
-              ? initialPosition.y +
-                  (finalPosition.y - initialPosition.y) *
-                      animationDistribution.value
-              : y,
-      child: SizedBox(
-          width: (isScalling)
-              ? initialScale.x +
-                  (finalScale.x - initialScale.x) * animationScalling.value
-              : initialScale.x,
-          height: (isScalling)
-              ? initialScale.y +
-                  (finalScale.y - initialScale.y) * animationScalling.value
-              : initialScale.y,
-          child: GestureDetector(
-            onPanUpdate: (DragUpdateDetails details) {
-              if (!isAnimating) {
-                _onTapUpdate(details);
-              }
-            },
-            onPanEnd: (DragEndDetails endDetails) => _onPanEnd(endDetails),
-            onPanStart: (DragStartDetails startDetails) {
-              if (!isAnimating) {
-                _onPanStart(startDetails);
-              }
-            },
-            child: Container(
-              decoration: BoxDecoration(
-                  image: DecorationImage(
-                      image: ExactAssetImage('assets/images/cross-ace.png'),
-                      fit: BoxFit.contain),
-                  color: Colors.black12),
-              width: double.infinity,
-              height: double.infinity,
-            ),
-          )),
-    );
+        left: (isDragging)
+            ? x
+            : (isAnimating)
+                ? animation.value
+                : (isAnimatingBeginning)
+                    ? initialPosition.x +
+                        (finalPosition.x - initialPosition.x) *
+                            animationDistribution.value
+                    : x,
+        top: (isDragging)
+            ? y
+            : (isAnimatingBeginning)
+                ? initialPosition.y +
+                    (finalPosition.y - initialPosition.y) *
+                        animationDistribution.value
+                : y,
+        child: Transform.rotate(
+          angle: (isAngleAnimating)
+              ? initialAngle * (math.pi / 180) +
+                  (finalAngle - initialAngle) *
+                      animationAngle.value *
+                      (math.pi / 180)
+              : initialAngle * (math.pi / 180),
+          child: SizedBox(
+              width: (isScalling)
+                  ? initialScale.x +
+                      (finalScale.x - initialScale.x) * animationScalling.value
+                  : initialScale.x,
+              height: (isScalling)
+                  ? initialScale.y +
+                      (finalScale.y - initialScale.y) * animationScalling.value
+                  : initialScale.y,
+              child: GestureDetector(
+                onPanUpdate: (DragUpdateDetails details) {
+                  if (!isAnimating) {
+                    _onTapUpdate(details);
+                  }
+                },
+                onPanEnd: (DragEndDetails endDetails) => _onPanEnd(endDetails),
+                onPanStart: (DragStartDetails startDetails) {
+                  if (!isAnimating) {
+                    _onPanStart(startDetails);
+                  }
+                },
+                child: Container(
+                  decoration: BoxDecoration(
+                      image: DecorationImage(
+                          image: ExactAssetImage('assets/images/cross-ace.png'),
+                          fit: BoxFit.contain),
+                      color: Colors.black12),
+                  width: double.infinity,
+                  height: double.infinity,
+                ),
+              )),
+        ));
   }
 }

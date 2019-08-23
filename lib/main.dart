@@ -37,12 +37,18 @@ class _MyAppState extends State<MyApp> {
 GlobalKey<CardItemState> cardEngineKey1 = GlobalKey();
 GlobalKey<CardItemState> cardEngineKey2 = GlobalKey();
 GlobalKey<CardItemState> cardEngineKey3 = GlobalKey();
+
 GlobalKey<CardItemState> cardEngineKey4 = GlobalKey();
 GlobalKey<CardItemState> cardEngineKey5 = GlobalKey();
 GlobalKey<CardItemState> cardEngineKey6 = GlobalKey();
+
 GlobalKey<CardItemState> cardEngineKey7 = GlobalKey();
 GlobalKey<CardItemState> cardEngineKey8 = GlobalKey();
 GlobalKey<CardItemState> cardEngineKey9 = GlobalKey();
+
+GlobalKey<CardItemState> cardEngineKey10 = GlobalKey();
+GlobalKey<CardItemState> cardEngineKey11 = GlobalKey();
+GlobalKey<CardItemState> cardEngineKey12 = GlobalKey();
 
 List<GlobalKey<CardItemState>> allC = [
   cardEngineKey1,
@@ -50,8 +56,21 @@ List<GlobalKey<CardItemState>> allC = [
   cardEngineKey3,
   cardEngineKey4,
   cardEngineKey5,
-  cardEngineKey6
+  cardEngineKey6,
+  cardEngineKey7,
+  cardEngineKey8,
+  cardEngineKey9,
+  cardEngineKey10,
+  cardEngineKey11,
+  cardEngineKey12
 ];
+
+Player mainPlayer = Player(tablePlace: 0, avatar: "sexy", name: "Daniyar");
+Player player2 = Player(tablePlace: 2, avatar: "notsexy", name: "Elnar");
+Player player3 = Player(tablePlace: 3, avatar: "notsexy", name: "Sundet");
+Player player4 = Player(tablePlace: 4, avatar: "notsexy", name: "Sanzhar");
+
+List<Player> allPlayers = [mainPlayer, player2, player3, player4];
 
 class MyHomePage extends StatefulWidget {
   MyHomePage({Key key, this.title}) : super(key: key);
@@ -89,6 +108,7 @@ class _MyHomePageState extends State<MyHomePage> with TickerProviderStateMixin {
                     model: CardManagerModel()
                       ..init(
                           allC: allC,
+                          allPlayers: allPlayers,
                           screenHeight: screenHeight,
                           screenWidth: screenWidth),
                     child: CardManager(
